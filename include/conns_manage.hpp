@@ -19,9 +19,9 @@ namespace db_config {
 }
 
 enum conn_stat {
-    conn_working = 1,
-    conn_pending = 2,
-    conn_error   = 3,
+    conn_working = 1,   // 忙碌状态
+    conn_pending = 2,   // 空闲可用状态
+    conn_error   = 3,   // 错误状态
 };
 
 class conns_manage: public boost::noncopyable
@@ -32,12 +32,16 @@ public:
     explicit conns_manage(size_t capacity);
     connection_ptr request_conn();
     void free_conn(connection_ptr conn);
+    void conn_check();
+    
+private:
 
     static boost::condition_variable_any conn_notify;
     static boost::mutex conn_notify_mutex;
-    
-private:
-    size_t capacity_;
+
+    size_t aquired_time_; // 使用计数
+    size_t capacity_; // total capacity
+    size_t free_cnt_; // free connection available
     std::map<connection_ptr, enum conn_stat> conns_;
 };
 

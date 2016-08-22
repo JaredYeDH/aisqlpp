@@ -1,3 +1,4 @@
+#include "general.hpp"
 #include "connection.hpp"
 
 namespace aisqlpp {
@@ -11,14 +12,14 @@ namespace aisqlpp {
         } 
         catch (sql::SQLException &e) 
         {
-            cerr << "# ERR: " << e.what();
-            cerr << " (MySQL error code: " << e.getErrorCode();
-		    cerr << ", SQLState: " << e.getSQLState() << " )" << endl;
+            BOOST_LOG_T(error) << "# ERR: " << e.what();
+            BOOST_LOG_T(error) << " (MySQL error code: " << e.getErrorCode();
+		    BOOST_LOG_T(error) << ", SQLState: " << e.getSQLState() << " )" ;
             abort();
         }
 
         stmt_->execute("USE " + db);
-        cout << "Create New Connection OK!" << endl;
+        BOOST_LOG_T(info) << "Create New Connection OK!" ;
     }
 
     connection::~connection()
