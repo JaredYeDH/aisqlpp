@@ -1,6 +1,6 @@
 stsqlpp
 
-Aimed for a user-friendly C++11 MySQL/Mariadb client library.
+Aimed for a user-friendly C++11 MySQL/Mariadb client library, which I want the sql can be more easily and safe used in C++11.
 
 
 # Reference

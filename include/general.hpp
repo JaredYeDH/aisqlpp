@@ -1,5 +1,5 @@
-#ifndef _GENERAL_H_
-#define _GENERAL_H_
+#ifndef _GENERAL_HPP_
+#define _GENERAL_HPP_
 
 #include <iostream>
 using std::cout;
@@ -12,8 +12,11 @@ using std::string;
 using std::int64_t;
 using std::uint64_t;
 
+// smart ptr
+#include <memory>
 
-namespace airobot {
+
+namespace aisqlpp {
 
 #if 0
 #define BOOST_LOG_T(x) BOOST_LOG_TRIVIAL(x)<<::basename(__FILE__)<<":"<<__LINE__<<"[@"<<__func__<<"]"<<" " 
@@ -25,4 +28,4 @@ namespace airobot {
 
 
 
-#endif // _GENERAL_H_
+#endif // _GENERAL_HPP_

@@ -1,15 +1,15 @@
 DEBUG ?= 1
 CXX = g++
 CXXFLAGS = -g -O2 -std=c++11
-PACKAGE = stsqlpp
+PACKAGE = aisqlpp
 PACKAGE_NAME = $(PACKAGE)
 PACKAGE_STRING = $(PACKAGE_NAME)1.0
 PACKAGE_VERSION = 1.0
 SHELL = /bin/bash
 VERSION = 1.0
 SRC_DIRS = ./source
-EXTRAFLAGS = -I./include $(shell mysql_config --cflags --libs) -DBOOST_LOG_DYN_LINK -lboost_system -lboost_thread-mt \
--lboost_date_time -lboost_log -lboost_log_setup
+EXTRAFLAGS = -I./include $(shell mysql_config --cflags --libs_r) -DBOOST_LOG_DYN_LINK -lboost_system -lboost_thread-mt \
+-lboost_date_time -lboost_log -lboost_log_setup -lmysqlcppconn
 
 OBJDIR = ./obj
 

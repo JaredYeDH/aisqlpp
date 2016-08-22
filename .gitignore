@@ -1,0 +1,6 @@
+aisqlpp
+aisqlpp.*
+obj/
+*.log
+test/obj/
+test/aisqlpp_test
