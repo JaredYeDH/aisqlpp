@@ -56,6 +56,28 @@ connection_ptr conns_manage::request_conn()
     return nullptr;
 }
 
+connection_ptr conns_manage::try_request_conn(size_t msec)
+{
+    boost::unique_lock<boost::mutex> lock(conn_notify_mutex); 
+    //owns lock
+
+    if(free_cnt_ || conn_notify.timed_wait(lock, boost::posix_time::milliseconds(msec)))
+    {
+        for (auto& item: conns_)
+        {
+            if (item.second == conn_pending)
+            {
+                item.second = conn_working;
+                ++ aquired_time_;
+                -- free_cnt_;
+                return item.first;
+            }
+        }
+    }
+
+    return nullptr;
+}
+
 void conns_manage::free_conn(connection_ptr conn)
 {
     {
@@ -70,8 +92,6 @@ void conns_manage::free_conn(connection_ptr conn)
                 ++ free_cnt_;
             }
         }
-
-        ++ free_cnt_;
     }
     conn_notify.notify_all();
 
@@ -81,10 +101,10 @@ void conns_manage::free_conn(connection_ptr conn)
 // dummy connection health check
 void conns_manage::conn_check()
 {
-    size_t cnt_total;
-    size_t cnt_pending;
-    size_t cnt_working;
-    size_t cnt_error;
+    size_t cnt_total = 0;
+    size_t cnt_pending = 0;
+    size_t cnt_working = 0;
+    size_t cnt_error = 0;
 
     for (auto& item: conns_)
     {
@@ -94,11 +114,14 @@ void conns_manage::conn_check()
             ++ cnt_working;
         else if (conns_[item.first] == conn_error) 
             ++ cnt_error;
+        else
+            abort();
 
         ++ cnt_total;
     }
 
     assert(cnt_total == capacity_);
+
     if (free_cnt_ != cnt_pending)
         BOOST_LOG_T (error) << boost::format("record free conn:%d, but check with: %d ") % free_cnt_ 
                                             % cnt_pending;

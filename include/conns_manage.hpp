@@ -31,8 +31,10 @@ public:
 
     explicit conns_manage(size_t capacity);
     connection_ptr request_conn();
+    connection_ptr try_request_conn(size_t msec);
     void free_conn(connection_ptr conn);
     void conn_check();
+    size_t free_count() { return free_cnt_; }
     
 private:
 
