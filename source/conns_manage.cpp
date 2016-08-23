@@ -63,7 +63,7 @@ conns_manage::conns_manage(size_t capacity):
         conns_[item.first] = conn_pending;
     }
 
-    BOOST_LOG_T(info) << "TOTAL FREE CONN AVAIL:" << free_cnt_;
+    BOOST_LOG_T(info) << "TOTAL FREE CONN AVAIL:" << free_cnt_ << endl;
     return;
 }
 
