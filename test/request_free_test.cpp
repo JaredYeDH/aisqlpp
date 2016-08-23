@@ -31,6 +31,7 @@ BOOST_AUTO_TEST_CASE(simple_request_free)
     mng.conn_check();
     mng.free_conn(ptr2);
 
+    cout << "simple_request_free FINISHED!" << endl;
 }
 
 

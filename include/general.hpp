@@ -12,6 +12,7 @@ using std::string;
 using std::int64_t;
 using std::uint64_t;
 
+#include <boost/shared_ptr.hpp>
 #include <boost/log/trivial.hpp>
 
 namespace aisqlpp {

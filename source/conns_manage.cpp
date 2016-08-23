@@ -2,11 +2,44 @@
 #include "conns_manage.hpp"
 
 #include <boost/format.hpp>
+#include <boost/make_shared.hpp>
+
+#include <ctime>
 
 namespace aisqlpp {
 
- boost::condition_variable_any conns_manage::conn_notify;
- boost::mutex conns_manage::conn_notify_mutex;
+boost::condition_variable_any conns_manage::conn_notify;
+boost::mutex conns_manage::conn_notify_mutex;
+
+size_t conns_manage::generate_conn_uuid(const conns_manage& mng)
+{
+    if (mng.conns_.size() >= RAND_MAX)
+    {
+        cerr << "TOO MUCH CONNECTIONS" << endl;
+        abort();
+    }
+
+    std::srand(std::time(0));
+    size_t r_id = 0;
+
+    while (true)
+    {
+        r_id = std::rand();
+        bool retry_flag = false;
+        for (const auto& item: mng.conns_)
+        {
+            if (item.first->get_uuid() == r_id)
+            {
+                retry_flag = true;
+                break;
+            }
+        }
+        if (retry_flag)
+            continue;
+
+        return r_id;
+    }
+}
 
 conns_manage::conns_manage(size_t capacity):
     capacity_(capacity),
@@ -16,8 +49,10 @@ conns_manage::conns_manage(size_t capacity):
 
     for (int i=0; i < capacity_; ++i)
     {
-        connection_ptr new_c = std::make_shared<connection>(db_config::host, db_config::user,
-                                                            db_config::passwd, db_config::db); 
+        connection_ptr new_c = 
+            boost::make_shared<connection>(*this, generate_conn_uuid(*this),
+                                           db_config::host, db_config::user,
+                                           db_config::passwd, db_config::db);
         conns_[new_c] = conn_error;  // not working
     }
 
@@ -61,6 +96,10 @@ connection_ptr conns_manage::try_request_conn(size_t msec)
     boost::unique_lock<boost::mutex> lock(conn_notify_mutex); 
     //owns lock
 
+    if (!free_cnt_ && !msec)
+        return nullptr;
+
+    // timed_wait not work with 0
     if(free_cnt_ || conn_notify.timed_wait(lock, boost::posix_time::milliseconds(msec)))
     {
         for (auto& item: conns_)
@@ -127,7 +166,7 @@ void conns_manage::conn_check()
                                             % cnt_pending;
 
     BOOST_LOG_T(info) << boost::format("Total: %d, avail: %d, working: %d , error: %d") % cnt_total 
-                                            % cnt_pending % cnt_working % cnt_error;
+                                            % cnt_pending % cnt_working % cnt_error << endl;
 
     return;
 }

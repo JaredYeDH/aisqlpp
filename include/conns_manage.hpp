@@ -34,7 +34,12 @@ public:
     connection_ptr try_request_conn(size_t msec);
     void free_conn(connection_ptr conn);
     void conn_check();
-    size_t free_count() { return free_cnt_; }
+    size_t capacity() const { return capacity_; }
+    size_t free_count() const { return free_cnt_; }
+
+    static size_t generate_conn_uuid(const conns_manage& mng);
+
+    ~conns_manage() = default;
     
 private:
 

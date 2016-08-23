@@ -10,23 +10,34 @@
 #include <cppconn/prepared_statement.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace aisqlpp {
 
-class connection;
-using connection_ptr = std::shared_ptr<connection>;
+class conns_manage;
 
-class connection: public boost::noncopyable
+class connection;
+using connection_ptr = boost::shared_ptr<connection>;
+
+class connection final: public boost::noncopyable
 {
 public:
-    connection(string host, string user, string passwd, string db);
+    connection() = delete;
+    connection(conns_manage& manage, size_t conn_uuid,
+               string host, string user, string passwd, string db);
     ~connection();
+    void set_uuid(size_t uuid) { conn_uuid_ = uuid; }
+    size_t get_uuid() { return conn_uuid_; }
 
 private:
     sql::Driver* driver_;
-    std::shared_ptr< sql::Connection > conn_;
-    std::shared_ptr< sql::Statement >  stmt_;
 
+    size_t  conn_uuid_; // RAND_MAX
+    boost::shared_ptr< sql::Connection > conn_;
+    boost::shared_ptr< sql::Statement >  stmt_;
+
+    // may be used future
+    conns_manage&    manage_;
 };
 
 }
