@@ -66,11 +66,29 @@ bool connection::execute_command(const string& sql)
 
 bool connection::execute_query(const string& sql)
 {
-    if(!conn_->isValid()) 
-        conn_->reconnect();
+    try {
 
-    stmt_->execute(sql);
-    result_.reset(stmt_->getResultSet());
+        if(!conn_->isValid()) 
+            conn_->reconnect();
+
+        stmt_->execute(sql);
+        result_.reset(stmt_->getResultSet());
+        
+        // 没有结果以及出错的时候，返回false
+        if (result_->rowsCount() == 0)
+            return false;
+
+        return true;
+
+    } catch (sql::SQLException &e) 
+    {
+        BOOST_LOG_T(error) << " STMT: " << sql << endl;
+        BOOST_LOG_T(error) << "# ERR: " << e.what() << endl;
+        BOOST_LOG_T(error) << " (MySQL error code: " << e.getErrorCode() << endl;
+        BOOST_LOG_T(error) << ", SQLState: " << e.getSQLState() << " )" << endl;
+
+        return false;
+    }
 }
 
 // return 0 maybe error, we ignore this case
@@ -108,5 +126,75 @@ bool connection::execute_check_exist(const string& sql)
     return false;
 }
 
+
+// 字符串特例化
+bool connection::execute_query_column(const string& sql, std::vector<std::string>& vec)
+{
+    try {
+
+        if(!conn_->isValid()) 
+            conn_->reconnect();
+
+        stmt_->execute(sql);
+        result_.reset(stmt_->getResultSet());
+        if (result_->rowsCount() == 0)
+            return false;
+
+        vec.clear();
+        while (result_->next()) 
+        {
+            vec.push_back(static_cast<std::string>(result_->getString(1)));
+
+        }
+
+        return true;
+
+    } catch (sql::SQLException &e) 
+    {
+        BOOST_LOG_T(error) << " STMT: " << sql << endl;
+        BOOST_LOG_T(error) << "# ERR: " << e.what() << endl;
+        BOOST_LOG_T(error) << " (MySQL error code: " << e.getErrorCode() << endl;
+        BOOST_LOG_T(error) << ", SQLState: " << e.getSQLState() << " )" << endl;
+
+        return false;
+    }
+}
+
+
+bool connection::execute_query_value(const string& sql, std::string& val)
+{
+    try {
+
+        if(!conn_->isValid()) 
+            conn_->reconnect();
+
+        stmt_->execute(sql);
+        result_.reset(stmt_->getResultSet());
+        if (result_->rowsCount() == 0)
+            return false;
+
+        if (result_->rowsCount() != 1) 
+        {
+            BOOST_LOG_T(error) << "Error rows count:" << result_->rowsCount() << endl;
+            return false;
+        }
+
+        while (result_->next()) 
+        {
+            val = static_cast<std::string>(result_->getString(1));
+        }
+
+        return true;
+
+    } catch (sql::SQLException &e) 
+    {
+        BOOST_LOG_T(error) << " STMT: " << sql << endl;
+        BOOST_LOG_T(error) << "# ERR: " << e.what() << endl;
+        BOOST_LOG_T(error) << " (MySQL error code: " << e.getErrorCode() << endl;
+        BOOST_LOG_T(error) << ", SQLState: " << e.getSQLState() << " )" << endl;
+
+        return false;
+    }
+}
 
 }
