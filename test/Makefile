@@ -9,7 +9,7 @@ VERSION = 1.0
 SRC_DIRS = ../source
 TEST_SRC_DIRS = .
 EXTRAFLAGS = -I../include $(shell mysql_config --cflags --libs_r) -DBOOST_LOG_DYN_LINK -lboost_system -lboost_thread-mt \
--lboost_date_time -lboost_regex -lboost_log -lboost_log_setup -lmysqlcppconn
+-lboost_date_time -lboost_log -lboost_log_setup -lmysqlcppconn
 TESTFLAGS = -lboost_unit_test_framework
 
 OBJDIR = ../obj

@@ -4,14 +4,16 @@
 
 #include <vector>
  
-#include "connection.hpp"
-#include "conns_manage.hpp"
+#include "aisql_connection.hpp"
+#include "aisql_conns_manage.hpp"
+
+using namespace aisqlpp::db_config;
 
 BOOST_AUTO_TEST_SUITE(mysql_query_test)
 
 BOOST_AUTO_TEST_CASE(mysql_query_test)
 {
-    aisqlpp::conns_manage mng(3);
+    aisqlpp::conns_manage mng(3, host, user, passwd, db); 
     aisqlpp::connection_ptr ptr = mng.request_conn();
 
     assert(ptr);
@@ -26,7 +28,7 @@ BOOST_AUTO_TEST_CASE(mysql_query_test)
 
 BOOST_AUTO_TEST_CASE(mysql_query_resultset_test)
 {
-    aisqlpp::conns_manage mng(3);
+    aisqlpp::conns_manage mng(3, host, user, passwd, db); 
     aisqlpp::connection_ptr ptr = mng.request_conn();
 
     assert(ptr);
@@ -46,7 +48,7 @@ BOOST_AUTO_TEST_CASE(mysql_query_resultset_test)
 
 BOOST_AUTO_TEST_CASE(mysql_template_one_query)
 {
-    aisqlpp::conns_manage mng(3);
+    aisqlpp::conns_manage mng(3, host, user, passwd, db); 
     aisqlpp::connection_ptr ptr = mng.request_conn();
 
     assert(ptr);
@@ -67,7 +69,7 @@ BOOST_AUTO_TEST_CASE(mysql_template_one_query)
 
 BOOST_AUTO_TEST_CASE(mysql_template_column_query)
 {
-    aisqlpp::conns_manage mng(3);
+    aisqlpp::conns_manage mng(3, host, user, passwd, db); 
     aisqlpp::connection_ptr ptr = mng.request_conn();
 
     assert(ptr);

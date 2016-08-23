@@ -4,8 +4,10 @@
  
 #include <boost/thread.hpp>
 
-#include "connection.hpp"
-#include "conns_manage.hpp"
+#include "aisql_connection.hpp"
+#include "aisql_conns_manage.hpp"
+
+using namespace aisqlpp::db_config;
 
 BOOST_AUTO_TEST_SUITE(request_free_multithread_test)
 
@@ -44,7 +46,7 @@ static void dummy_t2(aisqlpp::conns_manage& mng)
 BOOST_AUTO_TEST_CASE(simple_request_free_multithread)
 {
     boost::thread_group threads;
-    aisqlpp::conns_manage mng(5);
+    aisqlpp::conns_manage mng(5, host, user, passwd, db); 
 
     threads.create_thread(
             [&mng]{

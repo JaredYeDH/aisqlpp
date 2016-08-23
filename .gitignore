@@ -1,6 +1,8 @@
 aisqlpp
 aisqlpp.*
 obj/
+lib/
 *.log
 test/obj/
 test/aisqlpp_test
+test/backup

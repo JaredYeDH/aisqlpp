@@ -7,7 +7,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 
-#include "connection.hpp"
+#include "aisql_connection.hpp"
 
 namespace aisqlpp {
 
@@ -29,7 +29,8 @@ class conns_manage: public boost::noncopyable
 public:
     conns_manage() = delete;
 
-    explicit conns_manage(size_t capacity);
+    conns_manage(size_t capacity, const string host, const string user,
+                          const string passwd, const string db);
     connection_ptr request_conn();
     connection_ptr try_request_conn(size_t msec);
     void free_conn(connection_ptr conn);

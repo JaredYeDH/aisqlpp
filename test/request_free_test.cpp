@@ -3,14 +3,16 @@
 #include <memory>
  
 
-#include "connection.hpp"
-#include "conns_manage.hpp"
+#include "aisql_connection.hpp"
+#include "aisql_conns_manage.hpp"
+
+using namespace aisqlpp::db_config;
 
 BOOST_AUTO_TEST_SUITE(request_free_test)
 
 BOOST_AUTO_TEST_CASE(simple_request_free)
 {
-    aisqlpp::conns_manage mng(5);
+    aisqlpp::conns_manage mng(5, host, user, passwd, db); 
 
     BOOST_CHECK_EQUAL(5, mng.free_count());
     

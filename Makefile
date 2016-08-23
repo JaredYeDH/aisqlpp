@@ -12,6 +12,8 @@ EXTRAFLAGS = -I./include $(shell mysql_config --cflags --libs_r) -DBOOST_LOG_DYN
 -lboost_date_time -lboost_log -lboost_log_setup -lmysqlcppconn
 
 OBJDIR = ./obj
+LIBNAME = libaisqlpp.a
+LIBDIR = ./lib
 
 vpath %.cpp $(SRC_DIRS)
 
@@ -28,7 +30,8 @@ TARGET_DIR=Release
 endif
 
 $(PACKAGE) : $(objs) 
-	- @mkdir -p $(OBJDIR)
+	- @mkdir -p $(OBJDIR) $(LIBDIR)
+	$(AR) rcs $(LIBDIR)/$(LIBNAME) $^
 	$(CXX) -c $(CXXFLAGS) $(EXTRAFLAGS) $(SRC_DIRS)/main.cpp -o $(OBJDIR)/main.o
 	$(CXX) $(OBJDIR)/main.o $^ $(CXXFLAGS) $(EXTRAFLAGS) -o $(TARGET_DIR)/$(PACKAGE)
 
@@ -41,5 +44,6 @@ $(objs) : $(OBJDIR)/%.o: %.cpp
 
 .PHONY : clean 
 clean :	
-	-rm -fr $(OBJDIR)
-	-rm -fr $(TARGET_DIR)/$(PACKAGE)
+	-rm -fr $(OBJDIR)/*
+	-rm -fr $(TARGET_DIR)/*
+	-rm -fr $(LIBDIR)/*

@@ -1,7 +1,7 @@
 #ifndef _CONNECTION_HPP_
 #define _CONNECTION_HPP_
 
-#include "general.hpp"
+#include "aisql_general.hpp"
 #include <cppconn/driver.h>
 #include <cppconn/connection.h>
 #include <cppconn/exception.h>

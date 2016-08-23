@@ -1,5 +1,5 @@
-#include "general.hpp"
-#include "conns_manage.hpp"
+#include "aisql_general.hpp"
+#include "aisql_conns_manage.hpp"
 
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
@@ -41,7 +41,8 @@ size_t conns_manage::generate_conn_uuid(const conns_manage& mng)
     }
 }
 
-conns_manage::conns_manage(size_t capacity):
+conns_manage::conns_manage(size_t capacity, const string host, const string user,
+                          const string passwd, const string db):
     capacity_(capacity),
     conns_()
 {
@@ -51,8 +52,7 @@ conns_manage::conns_manage(size_t capacity):
     {
         connection_ptr new_c = 
             boost::make_shared<connection>(*this, generate_conn_uuid(*this),
-                                           db_config::host, db_config::user,
-                                           db_config::passwd, db_config::db);
+                                           host, user, passwd, db);
         conns_[new_c] = conn_error;  // not working
     }
 

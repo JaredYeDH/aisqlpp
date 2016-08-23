@@ -1,6 +1,6 @@
-#include "general.hpp"
-#include "connection.hpp"
-#include "conns_manage.hpp"
+#include "aisql_general.hpp"
+#include "aisql_connection.hpp"
+#include "aisql_conns_manage.hpp"
 
 #include <boost/scoped_ptr.hpp>
 
