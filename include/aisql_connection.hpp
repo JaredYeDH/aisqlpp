@@ -12,6 +12,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <vector>
+
 namespace aisqlpp {
 
 class conns_manage;
@@ -43,8 +45,10 @@ public:
     bool execute_query_column(const string& sql, std::vector<T>& vec);
     template<typename T>
     bool execute_query_value(const string& sql, T& val);
-    bool execute_query_column(const string& sql, std::vector<std::string>& vec);
-    bool execute_query_value(const string& sql, std::string& val);
+
+private:
+    template <typename T>
+    bool raw_query_value(T& val);
 
 private:
     sql::Driver* driver_;
@@ -66,6 +70,45 @@ private:
     conns_manage&    manage_;
 };
 
+template <typename T>
+bool connection::raw_query_value(T& val)
+{
+    if (typeid(T) == typeid(float) ||
+        typeid(T) == typeid(double) )
+    {
+        val = static_cast<T>(result_->getDouble(1));
+    }
+    else if (typeid(T) == typeid(int) ||
+        typeid(T) == typeid(int64_t) )
+    {
+        val = static_cast<T>(result_->getInt64(1));
+    }
+    else if (typeid(T) == typeid(unsigned int) ||
+        typeid(T) == typeid(uint64_t) )
+    {
+        val = static_cast<T>(result_->getUInt64(1));
+    }
+    else
+    {
+        BOOST_LOG_T(error) << "Unsupported type: " << typeid(T).name() << endl;
+        return false;
+    }
+
+    return true;
+}
+
+// 字符串特例化
+// 特例化如果多次包含连接会重复定义，所以要么static、inline，要不
+// 这里extern进行模板声明，然后在cpp文件中进行定义
+template <>
+inline bool connection::raw_query_value(std::string& val)
+{
+    val = static_cast<std::string>(result_->getString(1));
+
+    return true;
+}
+
+//API
 template<typename T>
 bool connection::execute_query_column(const string& sql, std::vector<T>& vec)
 {
@@ -80,30 +123,18 @@ bool connection::execute_query_column(const string& sql, std::vector<T>& vec)
             return false;
 
         vec.clear();
+        T r_val;
+        bool ret_flag = false;
         while (result_->next()) 
         {
-            if (typeid(T) == typeid(float) ||
-                typeid(T) == typeid(double) )
+            if (raw_query_value(r_val)) 
             {
-                vec.push_back(static_cast<T>(result_->getDouble(1)));
-            }
-            else if (typeid(T) == typeid(int) ||
-                typeid(T) == typeid(int64_t) )
-            {
-                vec.push_back(static_cast<T>(result_->getInt64(1)));
-            }
-            else if (typeid(T) == typeid(unsigned int) ||
-                typeid(T) == typeid(uint64_t) )
-            {
-                vec.push_back(static_cast<T>(result_->getUInt64(1)));
-            }
-            else
-            {
-                BOOST_LOG_T(error) << "Unsupported type: " << typeid(T).name() << endl;
+                vec.push_back(r_val);
+                ret_flag = true;
             }
         }
 
-        return true;
+        return ret_flag;
 
     } catch (sql::SQLException &e) 
     {
@@ -135,30 +166,16 @@ bool connection::execute_query_value(const string& sql, T& val)
             return false;
         }
 
-        while (result_->next()) 
+        if (result_->next()) 
         {
-            if (typeid(T) == typeid(float) ||
-                typeid(T) == typeid(double) )
-            {
-                val = static_cast<T>(result_->getDouble(1));
-            }
-            else if (typeid(T) == typeid(int) ||
-                typeid(T) == typeid(int64_t) )
-            {
-                val = static_cast<T>(result_->getInt64(1));
-            }
-            else if (typeid(T) == typeid(unsigned int) ||
-                typeid(T) == typeid(uint64_t) )
-            {
-                val = static_cast<T>(result_->getUInt64(1));
-            }
-            else
-            {
-                BOOST_LOG_T(error) << "Unsupported type: " << typeid(T).name() << endl;
-            }
+            T r_val;
+            if (raw_query_value(r_val)) 
+                val = r_val;
+
+            return true;
         }
 
-        return true;
+        return false;
 
     } catch (sql::SQLException &e) 
     {
