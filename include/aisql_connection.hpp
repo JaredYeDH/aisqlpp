@@ -41,6 +41,12 @@ public:
     // 不会修改内部指针引用计数
     sql::ResultSet* get_result_set() { return result_.get(); }
 
+    // prepared stmt 
+    void create_prep_stmt(const string& sql) { prep_stmt_.reset(conn_->prepareStatement(sql)); }
+    sql::PreparedStatement* get_prep_stmt() { return prep_stmt_.get(); }
+    bool execute_prep_stmt_command();
+    bool execute_prep_stmt_query();
+
     template <typename T>
     bool execute_query_column(const string& sql, std::vector<T>& vec);
     template <typename T>
@@ -70,7 +76,7 @@ private:
     boost::shared_ptr<sql::ResultSet>   result_;
 
     // prep_stmt_ create manually
-    // boost::shared_ptr< sql::PreparedStatement > prep_stmt_;
+    boost::shared_ptr< sql::PreparedStatement > prep_stmt_;
 
     // may be used future
     conns_manage&    manage_;

@@ -11,6 +11,7 @@ connection::connection(conns_manage& manage, size_t conn_uuid,
     driver_(get_driver_instance()),
     conn_uuid_(conn_uuid),
     result_(),
+    prep_stmt_(),
     manage_(manage)
 {
     try {
@@ -34,6 +35,7 @@ connection::~connection()
     /* reset to fore delete, actually not need */
     conn_.reset();
     stmt_.reset();
+    prep_stmt_.reset();
 
     if (result_)
     {
@@ -124,6 +126,55 @@ bool connection::execute_check_exist(const string& sql)
         return true;
 
     return false;
+}
+
+
+
+bool connection::execute_prep_stmt_command()
+{
+    try {
+
+        if(!conn_->isValid()) 
+            conn_->reconnect();
+
+        return prep_stmt_->execute(); 
+
+    } catch (sql::SQLException &e) 
+    {
+        BOOST_LOG_T(error) << " PREP_STMT: " << endl;
+        BOOST_LOG_T(error) << "# ERR: " << e.what() << endl;
+        BOOST_LOG_T(error) << " (MySQL error code: " << e.getErrorCode() << endl;
+        BOOST_LOG_T(error) << ", SQLState: " << e.getSQLState() << " )" << endl;
+
+        return false;
+    }
+}
+
+bool connection::execute_prep_stmt_query()
+{
+    try {
+
+        if(!conn_->isValid()) 
+            conn_->reconnect();
+
+        prep_stmt_->execute();
+        result_.reset(prep_stmt_->getResultSet());
+        
+        // 没有结果以及出错的时候，返回false
+        if (result_->rowsCount() == 0)
+            return false;
+
+        return true;
+
+    } catch (sql::SQLException &e) 
+    {
+        BOOST_LOG_T(error) << " PREP_STMT: "  << endl;
+        BOOST_LOG_T(error) << "# ERR: " << e.what() << endl;
+        BOOST_LOG_T(error) << " (MySQL error code: " << e.getErrorCode() << endl;
+        BOOST_LOG_T(error) << ", SQLState: " << e.getSQLState() << " )" << endl;
+
+        return false;
+    }
 }
 
 
