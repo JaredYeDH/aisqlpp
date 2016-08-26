@@ -41,14 +41,20 @@ public:
     // 不会修改内部指针引用计数
     sql::ResultSet* get_result_set() { return result_.get(); }
 
-    template<typename T>
+    template <typename T>
     bool execute_query_column(const string& sql, std::vector<T>& vec);
-    template<typename T>
+    template <typename T>
     bool execute_query_value(const string& sql, T& val);
+
+    // 可变模板参数进行查询
+    template<typename ... Args>
+    bool execute_query_values(const string& sql, Args& ... rest);
 
 private:
     template <typename T>
-    bool raw_query_value(T& val);
+    bool raw_query_value(const size_t idx, T& val);
+    template <typename T, typename ... Args>
+    bool raw_query_value(const size_t idx, T& val, Args& ... rest);
 
 private:
     sql::Driver* driver_;
@@ -71,22 +77,22 @@ private:
 };
 
 template <typename T>
-bool connection::raw_query_value(T& val)
+bool connection::raw_query_value(const size_t idx, T& val)
 {
     if (typeid(T) == typeid(float) ||
         typeid(T) == typeid(double) )
     {
-        val = static_cast<T>(result_->getDouble(1));
+        val = static_cast<T>(result_->getDouble(idx));
     }
     else if (typeid(T) == typeid(int) ||
         typeid(T) == typeid(int64_t) )
     {
-        val = static_cast<T>(result_->getInt64(1));
+        val = static_cast<T>(result_->getInt64(idx));
     }
     else if (typeid(T) == typeid(unsigned int) ||
         typeid(T) == typeid(uint64_t) )
     {
-        val = static_cast<T>(result_->getUInt64(1));
+        val = static_cast<T>(result_->getUInt64(idx));
     }
     else
     {
@@ -101,15 +107,15 @@ bool connection::raw_query_value(T& val)
 // 特例化如果多次包含连接会重复定义，所以要么static、inline，要不
 // 这里extern进行模板声明，然后在cpp文件中进行定义
 template <>
-inline bool connection::raw_query_value(std::string& val)
+inline bool connection::raw_query_value(const size_t idx, std::string& val)
 {
-    val = static_cast<std::string>(result_->getString(1));
+    val = static_cast<std::string>(result_->getString(idx));
 
     return true;
 }
 
-//API
-template<typename T>
+// APIs
+template <typename T>
 bool connection::execute_query_column(const string& sql, std::vector<T>& vec)
 {
     try {
@@ -127,13 +133,12 @@ bool connection::execute_query_column(const string& sql, std::vector<T>& vec)
         bool ret_flag = false;
         while (result_->next()) 
         {
-            if (raw_query_value(r_val)) 
+            if (raw_query_value(1, r_val)) 
             {
                 vec.push_back(r_val);
                 ret_flag = true;
             }
         }
-
         return ret_flag;
 
     } catch (sql::SQLException &e) 
@@ -147,10 +152,10 @@ bool connection::execute_query_column(const string& sql, std::vector<T>& vec)
     }
 }
 
-template<typename T>
+template <typename T>
 bool connection::execute_query_value(const string& sql, T& val)
 {
-        try {
+    try {
 
         if(!conn_->isValid()) 
             conn_->reconnect();
@@ -166,14 +171,55 @@ bool connection::execute_query_value(const string& sql, T& val)
             return false;
         }
 
-        if (result_->next()) 
-        {
-            T r_val;
-            if (raw_query_value(r_val)) 
-                val = r_val;
+        if (result_->next())
+            return raw_query_value(1, val);
 
-            return true;
+        return false;
+
+    } catch (sql::SQLException &e) 
+    {
+        BOOST_LOG_T(error) << " STMT: " << sql << endl;
+        BOOST_LOG_T(error) << "# ERR: " << e.what() << endl;
+        BOOST_LOG_T(error) << " (MySQL error code: " << e.getErrorCode() << endl;
+        BOOST_LOG_T(error) << ", SQLState: " << e.getSQLState() << " )" << endl;
+
+        return false;
+    }
+}
+
+
+
+// 可变模板参数进行查询
+
+template <typename T, typename ... Args>
+bool connection::raw_query_value(const size_t idx, T& val, Args& ... rest)
+{
+    raw_query_value(idx, val);
+
+    return raw_query_value(idx+1, rest ...);
+}
+
+template <typename ... Args>
+bool connection::execute_query_values(const string& sql, Args& ... rest)
+{
+    try {
+
+        if(!conn_->isValid()) 
+            conn_->reconnect();
+
+        stmt_->execute(sql);
+        result_.reset(stmt_->getResultSet());
+        if (result_->rowsCount() == 0)
+            return false;
+
+        if (result_->rowsCount() != 1) 
+        {
+            BOOST_LOG_T(error) << "Error rows count:" << result_->rowsCount() << endl;
+            return false;
         }
+
+        if (result_->next())
+            return raw_query_value(1, rest ...);
 
         return false;
 
