@@ -95,6 +95,11 @@ connection_ptr conns_manage::request_conn()
 
 bool conns_manage::request_scoped_conn(connection_ptr& conn)
 {
+    // reset first, all will stack at reset latter...
+    // probably recursive require conn_nofity_mutex problem
+
+    conn.reset();
+
     boost::unique_lock<boost::mutex> lock(conn_notify_mutex); 
     //owns lock
 
@@ -108,10 +113,11 @@ bool conns_manage::request_scoped_conn(connection_ptr& conn)
             item.second = conn_working;
             ++ aquired_time_;
             -- free_cnt_;
-
             conn.reset( item.first.get(), 
                         boost::bind(&conns_manage::free_conn, 
-                        this, boost::ref(conn))); //返回之后已经初始化了
+                        //this, boost::ref(conn))); //返回之后已经初始化了
+                        this, item.first)); //上面的调用比较的危险，因为不能确信析构conn的时候这个
+                                            // deleter的最后参数是否还有效，把稳一点，拷贝map中一份
 
             BOOST_LOG_T(debug) << "Request guard connection:" << conn->get_uuid();
             return true;
