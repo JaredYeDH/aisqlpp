@@ -11,7 +11,7 @@
 
 using namespace aisqlpp::db_config;
 
-BOOST_AUTO_TEST_SUITE(mysql_query_test)
+BOOST_AUTO_TEST_SUITE(mysql_query_test_values)
 
 BOOST_AUTO_TEST_CASE(mysql_template_querys)
 {

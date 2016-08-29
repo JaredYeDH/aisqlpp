@@ -3,13 +3,12 @@
 
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/ref.hpp>
+#include <boost/bind.hpp>
 
 #include <ctime>
 
 namespace aisqlpp {
-
-boost::condition_variable_any conns_manage::conn_notify;
-boost::mutex conns_manage::conn_notify_mutex;
 
 size_t conns_manage::generate_conn_uuid(const conns_manage& mng)
 {
@@ -82,6 +81,8 @@ connection_ptr conns_manage::request_conn()
             item.second = conn_working;
             ++ aquired_time_;
             -- free_cnt_;
+
+            BOOST_LOG_T(debug) << "Request connection:" << item.first->get_uuid();
             return item.first;
         }
     }
@@ -89,6 +90,37 @@ connection_ptr conns_manage::request_conn()
     // should not be here!!!!
     abort();
     return nullptr;
+}
+
+
+bool conns_manage::request_scoped_conn(connection_ptr& conn)
+{
+    boost::unique_lock<boost::mutex> lock(conn_notify_mutex); 
+    //owns lock
+
+    while(free_cnt_ == 0)
+        conn_notify.wait(lock);
+
+    for (auto& item: conns_)
+    {
+        if (item.second == conn_pending)
+        {
+            item.second = conn_working;
+            ++ aquired_time_;
+            -- free_cnt_;
+
+            conn.reset( item.first.get(), 
+                        boost::bind(&conns_manage::free_conn, 
+                        this, boost::ref(conn))); //返回之后已经初始化了
+
+            BOOST_LOG_T(debug) << "Request guard connection:" << conn->get_uuid();
+            return true;
+        }
+    }
+
+    // should not be here!!!!
+    abort();
+    return false;
 }
 
 connection_ptr conns_manage::try_request_conn(size_t msec)
@@ -109,6 +141,8 @@ connection_ptr conns_manage::try_request_conn(size_t msec)
                 item.second = conn_working;
                 ++ aquired_time_;
                 -- free_cnt_;
+
+                BOOST_LOG_T(debug) << "Request connection:" << item.first->get_uuid();
                 return item.first;
             }
         }
@@ -117,24 +151,41 @@ connection_ptr conns_manage::try_request_conn(size_t msec)
     return nullptr;
 }
 
-void conns_manage::free_conn(connection_ptr conn)
-{
+
+
+// f (a < b) is false and (b < a) is false, then (a == b). 
+// This is how STL's find() works.
+void conns_manage::free_conn(connection_ptr& conn)
+{ 
     {
         boost::lock_guard<boost::mutex> lock(conn_notify_mutex);
 
-        for (auto& item: conns_)
+        auto it = conns_.find(conn);    //operator < 值比较
+        if (it != conns_.end())
         {
-            if (item.first == conn)
-            {
-                assert(item.second != conn_pending);
-                item.second = conn_pending;
-                ++ free_cnt_;
-            }
+            assert(it->second = conn_pending);
+            it->second = conn_pending;
+            ++ free_cnt_;
+
+            BOOST_LOG_T(debug) << "Free connection:" << it->first->get_uuid();
+        }
+        else
+        {
+            BOOST_LOG_T(debug) << "Free not found!!!:" << it->first->get_uuid();
         }
     }
     conn_notify.notify_all();
 
     return;
+}
+
+enum conn_stat conns_manage::get_conn_stat(const connection_ptr& conn)
+{
+    const auto it = conns_.find(conn);
+    if (it != conns_.end())
+        return it->second;
+
+    return conn_error;
 }
 
 // dummy connection health check
@@ -167,6 +218,18 @@ void conns_manage::conn_check()
 
     BOOST_LOG_T(info) << boost::format("Total: %d, avail: %d, working: %d , error: %d") % cnt_total 
                                             % cnt_pending % cnt_working % cnt_error << endl;
+
+    return;
+}
+
+
+void conns_manage::conn_details()
+{
+    for (const auto& item: conns_)
+    {
+        cout << "ID: " << item.first->get_uuid() << ", refer: " << 
+            item.first.use_count() << ", stat: " << get_conn_stat(item.first) << endl;
+    }
 
     return;
 }
