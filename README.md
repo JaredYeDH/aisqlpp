@@ -1,5 +1,10 @@
-stsqlpp
+# stsqlpp   
 
+[![Language](https://img.shields.io/badge/Language-GCC-green.svg)](https://gcc.gnu.org/) 
+[![Author](https://img.shields.io/badge/author-Nicol%20TAO-blue.svg)](https://taozj.org/) 
+[![License](https://img.shields.io/badge/license-BSD-red.svg)](http://yanyiwu.mit-license.org)
+
+## Purpose   
 Aimed for wrapping a efficient, user-friendly and resource safe C++ MySQL/Mariadb client connector library.   
 This library contains several functions:   
 (1) Fixed size database connection pool, so user can request already-prepared database connection by blocking or non-blocking method;   
@@ -7,12 +12,12 @@ This library contains several functions:
 (3) With C++ template, some records can easily get just using a funtion call.
 (4) Tried a Scoped-Conn, RAII theory helping you event not care about free connection in normal or exception routine.   
 
-# Build requirement:   
+## Build requirement:   
 C++11   
 Boost   
 mysql-connector-cpp   
 
-# Quick Start:   
+## Quick Start:   
 (1) Initialize specified size connection-pool.   
 ```cpp
 #include "aisql_connection.hpp"
