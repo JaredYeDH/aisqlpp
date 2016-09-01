@@ -122,7 +122,7 @@ size_t connection::execute_query_count(const string& sql)
 
 bool connection::execute_check_exist(const string& sql)
 {
-    if (execute_query_count(sql) >=0 )
+    if (execute_query_count(sql) > 0 )
         return true;
 
     return false;

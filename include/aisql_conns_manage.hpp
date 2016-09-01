@@ -48,7 +48,7 @@ public:
     void free_conn(connection_ptr& conn);
     void conn_check();
     void conn_details();
-    size_t capacity() const { return capacity_; }
+    size_t conn_capacity() const { return capacity_; }
     size_t free_count() const { return free_cnt_; }
 
     enum conn_stat get_conn_stat(const connection_ptr& conn);

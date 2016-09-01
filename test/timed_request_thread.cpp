@@ -41,7 +41,7 @@ static void dummy_t2(aisqlpp::conns_manage& mng)
     ptr = mng.try_request_conn(0);
     assert(ptr == nullptr);
 
-    ptr = mng.try_request_conn(2000);
+    ptr = mng.try_request_conn(3000);
     assert(ptr);
     cout << "GET:" << ptr->get_uuid() << endl;
     

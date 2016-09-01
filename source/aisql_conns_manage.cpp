@@ -18,7 +18,7 @@ size_t conns_manage::generate_conn_uuid(const conns_manage& mng)
         abort();
     }
 
-    std::srand(std::time(0));
+    std::srand(static_cast<unsigned int>(std::time(0)));
     size_t r_id = 0;
 
     while (true)
@@ -41,13 +41,13 @@ size_t conns_manage::generate_conn_uuid(const conns_manage& mng)
 }
 
 conns_manage::conns_manage(size_t capacity, const string host, const string user,
-                          const string passwd, const string db):
+                          const string passwd, const string db) :
     capacity_(capacity),
     conns_()
 {
     assert(capacity_);
 
-    for (int i=0; i < capacity_; ++i)
+    for (size_t i=0; i < capacity_; ++i)
     {
         connection_ptr new_c = 
             boost::make_shared<connection>(*this, generate_conn_uuid(*this),

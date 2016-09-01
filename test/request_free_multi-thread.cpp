@@ -35,7 +35,7 @@ static void dummy_t2(aisqlpp::conns_manage& mng)
     size_t free_desire = 0;
     aisqlpp::connection_ptr ptr = nullptr;
 
-    while (free_desire < mng.capacity())
+    while (free_desire < mng.conn_capacity())
     {
         ptr = mng.request_conn();
         cout << "GET:" << ptr->get_uuid() << endl;
